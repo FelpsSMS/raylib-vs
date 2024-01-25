@@ -2,8 +2,10 @@ package main
 
 import (
 	"log"
+	"math/rand"
 	"os"
 	"reflect"
+	"time"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -30,6 +32,13 @@ func RemoveFromSlice[T any](slice []T, index int) []T {
 	return append(slice[:index], slice[index+1:]...)
 }
 
+func RandomColor() rl.Color {
+	r := uint8(rand.Intn(256))
+	g := uint8(rand.Intn(256))
+	b := uint8(rand.Intn(256))
+	return rl.NewColor(r, g, b, 255)
+}
+
 func main() {
 	rl.InitWindow(int32(SCREEN_WIDTH), int32(SCREEN_HEIGHT), GAME_TITLE)
 	defer rl.CloseWindow()
@@ -38,7 +47,7 @@ func main() {
 	rl.SetExitKey(0)
 
 	playerInstance = startDebugPlayer()
-	startDebugItemsAndMobs()
+	//startDebugItemsAndMobs()
 
 	camera = rl.NewCamera2D(rl.NewVector2(float32(SCREEN_WIDTH)/2, float32(SCREEN_HEIGHT)/2), rl.NewVector2(playerInstance.X, playerInstance.Y), 0, 1)
 
@@ -46,6 +55,8 @@ func main() {
 
 	rl.SetTargetFPS(60)
 	playerInstance.Velocity = rl.NewVector2(0, 0)
+
+	spawnMobsDebug()
 
 	for !rl.WindowShouldClose() {
 		// Reset the velocity
@@ -65,13 +76,10 @@ func main() {
 			playerInstance.Velocity.X += 1
 		}
 
-		// Normalize the velocity to ensure the playerInstance moves at the same speed in all directions
 		playerInstance.Velocity = rl.Vector2Normalize(playerInstance.Velocity)
 
-		// Scale the velocity by the speed factor
 		playerInstance.Velocity = rl.Vector2Scale(playerInstance.Velocity, movementSpeed)
 
-		// Apply the velocity to the position
 		playerInstance.Position = rl.Vector2Add(playerInstance.Position, playerInstance.Velocity)
 
 		camera.Target = playerInstance.Position
@@ -82,11 +90,13 @@ func main() {
 
 		rl.BeginMode2D(camera)
 
-		playerInstance.Draw()
-
 		for _, mob := range mobs {
+			mob.Move()
+			mob.CheckForCollision()
 			mob.Draw()
 		}
+
+		playerInstance.Draw()
 
 		rl.EndMode2D()
 
@@ -103,9 +113,35 @@ func startDebugPlayer() *Player {
 	return p
 }
 
-func startDebugItemsAndMobs() {
-	//Basic mob
-	basicMob := Spawn(Mob{Name: "Test", Position: rl.Vector2{X: 400, Y: 350}, Width: 30, Height: 40, HP: 100, MoveSpeed: 2, MovePattern: FIXED_HORIZONTAL, Damage: 5})
+func spawnMobsDebug() {
+	secondsToSpawn := time.Duration(5)
+	numberOfMobs := 100
 
-	mobs = append(mobs, basicMob)
+	go func() {
+		for _ = range time.Tick(secondsToSpawn * time.Second) {
+			logger.Print("spawn")
+
+			mobSpawnPointAux1 := rand.Intn(2)
+			if mobSpawnPointAux1 == 0 {
+				mobSpawnPointAux1 = -1
+			}
+
+			mobSpawnPointAux2 := rand.Intn(2)
+			if mobSpawnPointAux2 == 0 {
+				mobSpawnPointAux2 = -1
+			}
+
+			for i := 0; i < numberOfMobs; i++ {
+				basicMob := Spawn(Mob{Name: "Test", Position: rl.Vector2{X: 400, Y: 350}, Width: 30, Height: 40, HP: 100, MoveSpeed: 2, MovePattern: FIXED_HORIZONTAL, Damage: 5})
+
+				basicMob.Position.X = camera.Target.X + float32(mobSpawnPointAux1)*float32(rand.Intn(int(SCREEN_WIDTH)))
+				basicMob.Position.Y = camera.Target.Y + float32(mobSpawnPointAux2)*float32(rand.Intn(int(SCREEN_HEIGHT)))
+				basicMob.MoveSpeed = rand.Float32() * 2
+
+				spawnedMob := Spawn(*basicMob)
+
+				mobs = append(mobs, spawnedMob)
+			}
+		}
+	}()
 }

@@ -1,6 +1,9 @@
 package main
 
 import (
+	"math"
+	"math/rand"
+
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -41,9 +44,10 @@ type Mob struct {
 	HPBar           rl.Rectangle
 	originalHPWidth float32
 	Damage          float32
+	Color           rl.Color
 	// dropTable       []ItemDrop
 	// projectile      Projectile
-	attackPattern AttackPattern
+	//attackPattern AttackPattern
 }
 
 func Spawn(mob Mob) *Mob {
@@ -52,8 +56,58 @@ func Spawn(mob Mob) *Mob {
 	mob.MaxHP = mob.HP
 	mob.HPBar = rl.NewRectangle(mob.Position.X-mob.Width, mob.Position.Y-mob.Height/2, 20, 4)
 	mob.originalHPWidth = 100
+	mob.Color = RandomColor()
 
 	return &mob
+}
+
+func (mob *Mob) Move() {
+	const speed = 2
+	stuck := true
+	leader := &Mob{}                            // The leader of the mob
+	closestDistance := float32(math.MaxFloat32) // The shortest distance to a leader
+
+	for _, spawnedMob := range mobs {
+		mobGroupingHitbox := rl.NewRectangle(mob.Hitbox.X, mob.Hitbox.Y, mob.Hitbox.Width, mob.Hitbox.Height)
+		spawnedMobGroupingHitbox := rl.NewRectangle(spawnedMob.Hitbox.X, spawnedMob.Hitbox.Y, spawnedMob.Hitbox.Width, spawnedMob.Hitbox.Height)
+
+		if !rl.CheckCollisionRecs(spawnedMobGroupingHitbox, mobGroupingHitbox) {
+			stuck = false
+			direction := rl.Vector2Subtract(playerInstance.Position, mob.Position)
+
+			direction.X += float32(rand.Intn(5)) / 10
+			direction.Y += float32(rand.Intn(5)) / 10
+
+			direction = rl.Vector2Normalize(direction)
+
+			mob.Position = rl.Vector2Add(mob.Position, rl.Vector2Scale(direction, speed))
+			break
+
+		} else {
+			distance := rl.Vector2Length(rl.Vector2Subtract(mob.Position, spawnedMob.Position))
+			if distance < closestDistance {
+				closestDistance = distance
+				leader = spawnedMob
+			}
+		}
+	}
+
+	if stuck {
+		direction := rl.Vector2Subtract(leader.Position, mob.Position)
+
+		direction.X += float32(rand.Intn(5)) / 10
+		direction.Y += float32(rand.Intn(5)) / 10
+
+		direction = rl.Vector2Normalize(direction)
+
+		mob.Position = rl.Vector2Add(mob.Position, rl.Vector2Scale(direction, speed))
+	}
+}
+
+func (mob *Mob) CheckForCollision() {
+	if rl.CheckCollisionRecs(playerInstance.Hitbox, mob.Hitbox) {
+		playerInstance.HP -= 0.1
+	}
 }
 
 // func (mob *Mob) Move() {
@@ -105,13 +159,13 @@ func (mob *Mob) Draw() {
 	mob.Hitbox = rect
 
 	if mob.HP > 0 {
-		mob.HPBar.Width = mob.originalHPWidth * (mob.HP / mob.MaxHP)
+		// mob.HPBar.Width = mob.originalHPWidth * (mob.HP / mob.MaxHP)
 
-		mob.HPBar.X = mob.Position.X - mob.Width
-		mob.HPBar.Y = mob.Position.Y - mob.Height/2
+		// mob.HPBar.X = mob.Position.X - mob.Width
+		// mob.HPBar.Y = mob.Position.Y - mob.Height/2
 
-		rl.DrawRectangleRec(mob.HPBar, rl.Red)
-		rl.DrawRectangleRec(rect, rl.DarkGreen)
+		// rl.DrawRectangleRec(mob.HPBar, rl.Red)
+		rl.DrawRectangleRec(rect, mob.Color)
 	} else {
 		// index := FindElementIndex(mobs, mob)
 
