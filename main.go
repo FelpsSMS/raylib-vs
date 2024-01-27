@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 	"os"
@@ -17,6 +18,7 @@ var logger = log.New(os.Stdout, "LOG: ", log.Ldate|log.Ltime|log.Lshortfile)
 var camera rl.Camera2D
 var playerInstance *Player
 var mobs []*Mob
+var timer *Timer = &Timer{timerControl: 0, minutes: 0, seconds: 0}
 
 func FindElementIndex[T any](slice []T, element T) int {
 	for index, elementInSlice := range slice {
@@ -100,8 +102,25 @@ func main() {
 
 		rl.EndMode2D()
 
+		updateTimer()
+
 		rl.EndDrawing()
 	}
+}
+
+func updateTimer() {
+	timer.timerControl++
+
+	timer.seconds = timer.timerControl / 60
+
+	if timer.seconds == 60 {
+		timer.minutes++
+		timer.timerControl = 0
+	}
+
+	timerStr := fmt.Sprintf("%02d:%02d", timer.minutes, timer.seconds)
+
+	rl.DrawText(timerStr, int32(rl.GetScreenWidth())/2, int32(float32(rl.GetScreenHeight())/20), 20, rl.Black)
 }
 
 func startDebugPlayer() *Player {
@@ -114,12 +133,11 @@ func startDebugPlayer() *Player {
 }
 
 func spawnMobsDebug() {
-	secondsToSpawn := time.Duration(5)
-	numberOfMobs := 100
+	milisecondsToSpawn := time.Duration(50000)
+	numberOfMobs := 10
 
 	go func() {
-		for _ = range time.Tick(secondsToSpawn * time.Second) {
-			logger.Print("spawn")
+		for range time.Tick(milisecondsToSpawn * time.Millisecond) {
 
 			mobSpawnPointAux1 := rand.Intn(2)
 			if mobSpawnPointAux1 == 0 {
