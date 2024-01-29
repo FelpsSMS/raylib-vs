@@ -41,6 +41,11 @@ func RandomColor() rl.Color {
 	return rl.NewColor(r, g, b, 255)
 }
 
+func DrawOutlinedText(text string, posX int32, posY int32, fontSize int32, color rl.Color, outlineSize int32, outlineColor rl.Color) {
+	rl.DrawText(text, posX+outlineSize, posY+outlineSize, fontSize, outlineColor)
+	rl.DrawText(text, posX, posY, fontSize, color)
+}
+
 func main() {
 	rl.InitWindow(int32(SCREEN_WIDTH), int32(SCREEN_HEIGHT), GAME_TITLE)
 	defer rl.CloseWindow()
@@ -120,7 +125,8 @@ func updateTimer() {
 
 	timerStr := fmt.Sprintf("%02d:%02d", timer.minutes, timer.seconds)
 
-	rl.DrawText(timerStr, int32(rl.GetScreenWidth())/2, int32(float32(rl.GetScreenHeight())/20), 20, rl.Black)
+	DrawOutlinedText(timerStr, int32(rl.GetScreenWidth())/2, int32(float32(rl.GetScreenHeight())/20), 40, rl.LightGray, 4, rl.Black)
+
 }
 
 func startDebugPlayer() *Player {
