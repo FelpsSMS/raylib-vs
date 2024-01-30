@@ -56,7 +56,9 @@ func main() {
 	playerInstance = startDebugPlayer()
 	//startDebugItemsAndMobs()
 
-	camera = rl.NewCamera2D(rl.NewVector2(float32(SCREEN_WIDTH)/2, float32(SCREEN_HEIGHT)/2), rl.NewVector2(playerInstance.X, playerInstance.Y), 0, 1)
+	startDebugWeapons()
+
+	camera = rl.NewCamera2D(rl.NewVector2(float32(SCREEN_WIDTH)/2, float32(SCREEN_HEIGHT)/2), rl.NewVector2(playerInstance.Position.X, playerInstance.Position.Y), 0, 1)
 
 	movementSpeed := float32(4)
 
@@ -103,6 +105,10 @@ func main() {
 			mob.Draw()
 		}
 
+		for _, weapon := range playerInstance.weapons {
+			weapon.Draw()
+		}
+
 		playerInstance.Draw()
 
 		rl.EndMode2D()
@@ -132,10 +138,17 @@ func updateTimer() {
 func startDebugPlayer() *Player {
 	p := NewPlayer()
 
-	p.HPBar = rl.NewRectangle(p.X, p.Y+p.Height, 20, 4)
+	p.HPBar = rl.NewRectangle(p.Position.X, p.Position.Y+p.Height, 20, 4)
 	p.originalHPWidth = 100
 
 	return p
+}
+
+func startDebugWeapons() {
+	basicWeaponPos := playerInstance.Position
+	basicWeapon := Weapon{hitbox: rl.NewRectangle(basicWeaponPos.X, basicWeaponPos.Y, 200, 20), id: "basicWeapon", position: basicWeaponPos}
+
+	playerInstance.weapons = append(playerInstance.weapons, &basicWeapon)
 }
 
 func spawnMobsDebug() {

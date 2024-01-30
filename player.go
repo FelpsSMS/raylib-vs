@@ -23,8 +23,6 @@ const (
 )
 
 type Player struct {
-	X             float32
-	Y             float32
 	Width         float32
 	Height        float32
 	Hitbox        rl.Rectangle
@@ -35,6 +33,7 @@ type Player struct {
 	isInvunerable bool
 	originalY     float32
 	//Weapon             Weapon
+	weapons         []*Weapon
 	HPBar           rl.Rectangle
 	originalHPWidth float32
 	HP              float32
